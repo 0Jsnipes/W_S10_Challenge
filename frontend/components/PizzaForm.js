@@ -1,8 +1,7 @@
-import React, { useReducer, useState } from 'react';
+import React, { useReducer } from 'react';
 import { useCreateOrderMutation } from '../state/pizzaApi';
 
 const CHANGE_INPUT = 'CHANGE_INPUT';
-const TOGGLE_TOPPING = 'TOGGLE_TOPPING';
 const RESET_FORM = 'RESET_FORM';
 
 const initialState = {
@@ -21,10 +20,6 @@ const reducer = (state, action) => {
       const { name, value } = action.payload;
       return { ...state, [name]: value };
     }
-    case TOGGLE_TOPPING: {
-      const { name } = action.payload;
-      return { ...state, [name]: !state[name] };
-    }
     case RESET_FORM:
       return initialState;
     default:
@@ -34,52 +29,34 @@ const reducer = (state, action) => {
 
 export default function PizzaForm() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const [createOrder, { isLoading: isCreatingOrder, error: creationError }] = useCreateOrderMutation();
-  const [message, setMessage] = useState(null);
-  const [messageType, setMessageType] = useState('');
+  const [createOrder, { isLoading, isSuccess, isError, error }] = useCreateOrderMutation();
 
-  const onChange = (e) => {
-    const { name, value, type,} = e.target;
-    if (type === 'checkbox') {
-      dispatch({ type: TOGGLE_TOPPING, payload: { name } });
-    } else {
-      dispatch({ type: CHANGE_INPUT, payload: { name, value } });
-    }
+  const onChange = ({ target: { name, value } }) => {
+    dispatch({ type: CHANGE_INPUT, payload: { name, value } });
   };
 
   const resetForm = () => {
     dispatch({ type: RESET_FORM });
   };
 
-  const onNewOrder = (evt) => {
+  const onNewOrder = async (evt) => {
     evt.preventDefault();
     const { fullName, size, ...toppings } = state;
     const selectedToppings = Object.keys(toppings).filter((key) => toppings[key]);
-
-    createOrder({ fullName, size, toppings: selectedToppings })
-      .unwrap()
-      .then((data) => {
-        console.log(data);
-        setMessage(data.message);
-        setMessageType('success');
-        resetForm();
-      })
-      .catch((err) => {
-        console.log(err);
-        setMessage('Order failed: ' + (err.message || 'Unknown error'));
-        setMessageType('error');
-      });
+    try {
+      await createOrder({ fullName, size, toppings: selectedToppings }).unwrap();
+      resetForm();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
     <form onSubmit={onNewOrder}>
       <h2>Pizza Form</h2>
-      {isCreatingOrder && <div className='pending'>Order in progress...</div>}
-      {message && (
-        <div className={messageType === 'success' ? 'success' : 'failure'}>
-          {message}
-        </div>
-      )}
+      {isLoading && <div className='pending'>Order in progress...</div>}
+      {isError && <div className='failure'>Order failed: {error.message}</div>}
+      {isSuccess && <div className='success'>Order created successfully!</div>}
 
       <div className="input-group">
         <div>
@@ -116,53 +93,23 @@ export default function PizzaForm() {
 
       <div className="input-group">
         <label>
-          <input
-            data-testid="checkPepperoni"
-            name="1"
-            type="checkbox"
-            checked={state['1']}
-            onChange={onChange}
-          />
+          <input data-testid="checkPepperoni" name="1" type="checkbox" checked={state['1']} onChange={onChange} />
           Pepperoni<br />
         </label>
         <label>
-          <input
-            data-testid="checkGreenpeppers"
-            name="2"
-            type="checkbox"
-            checked={state['2']}
-            onChange={onChange}
-          />
+          <input data-testid="checkGreenpeppers" name="2" type="checkbox" checked={state['2']} onChange={onChange} />
           Green Peppers<br />
         </label>
         <label>
-          <input
-            data-testid="checkPineapple"
-            name="3"
-            type="checkbox"
-            checked={state['3']}
-            onChange={onChange}
-          />
+          <input data-testid="checkPineapple" name="3" type="checkbox" checked={state['3']} onChange={onChange} />
           Pineapple<br />
         </label>
         <label>
-          <input
-            data-testid="checkMushrooms"
-            name="4"
-            type="checkbox"
-            checked={state['4']}
-            onChange={onChange}
-          />
+          <input data-testid="checkMushrooms" name="4" type="checkbox" checked={state['4']} onChange={onChange} />
           Mushrooms<br />
         </label>
         <label>
-          <input
-            data-testid="checkHam"
-            name="5"
-            type="checkbox"
-            checked={state['5']}
-            onChange={onChange}
-          />
+          <input data-testid="checkHam" name="5" type="checkbox" checked={state['5']} onChange={onChange} />
           Ham<br />
         </label>
       </div>

@@ -4,51 +4,46 @@ import { useGetOrdersQuery } from '../state/pizzaApi';
 import { setFilter } from '../state/filterSlice';
 
 export default function OrderList() {
-  const dispatch = useDispatch();
+  const { data: orders, isLoading, isFetching } = useGetOrdersQuery();
   const filter = useSelector((state) => state.filter);
-  const { data: orders, isLoading: gettingOrders, isFetching: refreshingOrders } = useGetOrdersQuery();
+  const dispatch = useDispatch();
 
-  const handleFilterClick = (size) => {
+  const filteredOrders = orders?.filter((order) =>
+    filter === 'All' ? true : order.size === filter
+  );
+
+  const handleFilterChange = (size) => {
     dispatch(setFilter(size));
   };
 
-  if (gettingOrders || refreshingOrders) {
+  if (isLoading || isFetching) {
     return <div>Loading...</div>;
   }
-
-  const filteredOrders = filter === 'All' ? orders : orders.filter(order => order.size === filter);
 
   return (
     <div id="orderList">
       <h2>Pizza Orders</h2>
       <ol>
-        {
-          filteredOrders.map(order => (
-            <li key={order.id}>
-              <div>
-                {order.customer} ordered a {order.size} with {order.toppings > 0 ? `${order.toppings} toppings` : 'no toppings'}
-              </div>
-            </li>
-          ))
-        }
+        {filteredOrders.map((order) => (
+          <li key={order.id}>
+            <div>
+              {order.customer} ordered a {order.size} with {order.toppings.length > 0 ? `${order.toppings.length} toppings` : 'no toppings'}
+            </div>
+          </li>
+        ))}
       </ol>
       <div id="sizeFilters">
         Filter by size:
-        {
-          ['All', 'S', 'M', 'L'].map(size => {
-            const className = `button-filter${filter === size ? ' active' : ''}`;
-            return (
-              <button
-                data-testid={`filterBtn${size}`}
-                className={className}
-                key={size}
-                onClick={() => handleFilterClick(size)}
-              >
-                {size}
-              </button>
-            );
-          })
-        }
+        {['All', 'S', 'M', 'L'].map((size) => (
+          <button
+            data-testid={`filterBtn${size}`}
+            className={`button-filter ${filter === size ? 'active' : ''}`}
+            key={size}
+            onClick={() => handleFilterChange(size)}
+          >
+            {size}
+          </button>
+        ))}
       </div>
     </div>
   );
