@@ -54,9 +54,9 @@ export default function PizzaForm() {
   return (
     <form onSubmit={onNewOrder}>
       <h2>Pizza Form</h2>
-      {isLoading && <div className='pending'>Order in progress...</div>}
+      {isLoading && <div className='pending'>Order in progress</div>}
       {isError && <div className='failure'>Order failed: {error.message}</div>}
-      {isSuccess && <div className='success'>Order created successfully!</div>}
+      {isSuccess && <div className='success'></div>}
 
       <div className="input-group">
         <div>
